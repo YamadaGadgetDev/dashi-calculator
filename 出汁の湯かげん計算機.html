@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>出汁の湯かげん計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf6ee;
+    --card: #fffdf8;
+    --ink: #2b2420;
+    --sub: #8a7f6e;
+    --line: #e6ddcc;
+    --accent: #9c3b26;
+    --accent-soft: #f1e2da;
+    --good: #6b7b4f;
+    --good-soft: #eef1e6;
+  }
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1c1712;
+      --card: #262019;
+      --ink: #efe8db;
+      --sub: #a89c87;
+      --line: #3a3227;
+      --accent-soft: #3a281f;
+      --good-soft: #24291d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1c1712;
+    --card: #262019;
+    --ink: #efe8db;
+    --sub: #a89c87;
+    --line: #3a3227;
+    --accent-soft: #3a281f;
+    --good-soft: #24291d;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+    display: flex;
+    justify-content: center;
+  }
+  .page {
+    width: 100%;
+    max-width: 520px;
+    padding: 28px 20px 48px;
+  }
+  header { margin-bottom: 22px; }
+  h1 {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 1.7rem;
+    margin: 0 0 6px;
+    line-height: 1.4;
+  }
+  .lede {
+    color: var(--sub);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--sub);
+    margin-bottom: 8px;
+  }
+  .field .helper {
+    font-size: 0.78rem;
+    color: var(--sub);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  select, input[type="number"] {
+    width: 100%;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  select:focus, input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .slider-val {
+    min-width: 52px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+  .presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .preset-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .preset-btn:hover { border-color: var(--accent); }
+  .result {
+    background: var(--accent-soft);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+  }
+  .result .caption {
+    font-size: 0.85rem;
+    color: var(--sub);
+    margin-bottom: 14px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .pair .amt-label { font-size: 0.8rem; color: var(--sub); margin-bottom: 4px; }
+  .pair .amt-val {
+    font-family: "Shippori Mincho", serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .pair .amt-unit { font-size: 0.9rem; color: var(--sub); margin-left: 2px; }
+  .warn {
+    margin-top: 14px;
+    background: #fbe9e4;
+    color: #7a2c17;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    text-align: left;
+    line-height: 1.6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .warn { background: #402019; color: #f2c9bb; }
+  }
+  :root[data-theme="dark"] .warn { background: #402019; color: #f2c9bb; }
+
+  details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 22px;
+  }
+  summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--sub);
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "＋ "; color: var(--accent); }
+  details[open] summary::before { content: "－ "; }
+  .explain {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--sub);
+    margin-top: 14px;
+  }
+  .explain strong { color: var(--ink); }
+  footer {
+    text-align: center;
+    color: var(--sub);
+    font-size: 0.75rem;
+    margin-top: 24px;
+  }
+
+  /* --- タイマー --- */
+  .timer-card { position: relative; }
+  .timer-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .timer-head h2 {
+    font-family: "Shippori Mincho", serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .mute-btn {
+    border: none;
+    background: none;
+    font-size: 1.2rem;
+    color: var(--sub);
+    cursor: pointer;
+    padding: 8px;
+    line-height: 1;
+  }
+  .timer-note {
+    font-size: 0.8rem;
+    color: var(--sub);
+    margin: 0 0 16px;
+    line-height: 1.6;
+  }
+  .timer-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .hourglass {
+    width: 92px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+  }
+  .chamber {
+    width: 92px;
+    height: 56px;
+    position: relative;
+    overflow: hidden;
+    background: var(--accent-soft);
+    border-left: 2px solid var(--line);
+    border-right: 2px solid var(--line);
+  }
+  .chamber.top { clip-path: polygon(0 0, 100% 0, 52% 100%, 48% 100%); border-top: 2px solid var(--line); }
+  .chamber.bottom { clip-path: polygon(48% 0, 52% 0, 100% 100%, 0 100%); border-bottom: 2px solid var(--line); }
+  .sand {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    transition: height 0.25s linear;
+  }
+  .neck {
+    width: 4px;
+    height: 10px;
+    background: var(--line);
+    position: relative;
+  }
+  .stream {
+    position: absolute;
+    top: -2px; left: 50%;
+    transform: translateX(-50%);
+    width: 2px; height: 14px;
+    background: var(--accent);
+    opacity: 0;
+  }
+  .hourglass.running .stream {
+    opacity: 1;
+    animation: fall 0.5s linear infinite;
+  }
+  @keyframes fall {
+    0% { transform: translateX(-50%) translateY(-4px); opacity: 0; }
+    30% { opacity: 1; }
+    100% { transform: translateX(-50%) translateY(10px); opacity: 0; }
+  }
+  .time-display {
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: 3rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .time-display.done { color: var(--good); }
+  .time-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .time-chip {
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .time-chip.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .nudge-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .nudge-btn {
+    min-width: 72px; height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .timer-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-main, .btn-reset {
+    font-family: inherit;
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    min-height: 54px;
+    font-size: 1rem;
+  }
+  .btn-main {
+    flex: 2;
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-main:active { opacity: 0.85; }
+  .btn-reset {
+    flex: 1;
+    background: var(--paper);
+    color: var(--sub);
+    border: 1px solid var(--line);
+  }
+  .done-banner {
+    width: 100%;
+    background: var(--good-soft);
+    color: var(--good);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.92rem;
+    display: none;
+  }
+  .done-banner.show { display: block; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>出汁の湯かげん計算機</h1>
+    <p class="lede">沸かしたお湯と、水道水（常温）をどれくらいの割合で混ぜればちょうどいい温度になるか。それだけを教えてくれる道具です。</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <label for="targetTemp">どんな出汁にしたい？</label>
+      <select id="targetTemp"></select>
+      <div class="helper" id="targetNote"></div>
+    </div>
+
+    <div class="field">
+      <label for="totalVolume">出来上がりの量</label>
+      <input type="number" id="totalVolume" value="1000" step="50" min="100">
+      <div class="helper">ml（1000mlはだいたい5合の水の量です）</div>
+    </div>
+
+    <div class="field">
+      <label for="katsuoMass">鰹節の量：<span id="katsuoDisplay">20</span> g</label>
+      <div class="slider-row">
+        <input type="range" id="katsuoMass" min="5" max="60" step="1" value="20">
+      </div>
+      <div class="presets">
+        <button type="button" class="preset-btn" data-val="12">薄め</button>
+        <button type="button" class="preset-btn" data-val="20">いつもの濃さ</button>
+        <button type="button" class="preset-btn" data-val="35">濃いめ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="caption">これくらいの割合で混ぜてください</div>
+    <div class="pair">
+      <div>
+        <div class="amt-label">沸かしたお湯</div>
+        <div class="amt-val" id="boilOut">—<span class="amt-unit">ml</span></div>
+      </div>
+      <div>
+        <div class="amt-label">常温の水</div>
+        <div class="amt-val" id="coldOut">—<span class="amt-unit">ml</span></div>
+      </div>
+    </div>
+    <div id="warnBox" class="warn" style="display:none;"></div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <div class="card timer-card">
+    <div class="timer-head">
+      <h2>抽出時間の砂時計</h2>
+      <button type="button" class="mute-btn" id="muteBtn" aria-label="音のオン・オフ">🔔</button>
+    </div>
+    <p class="timer-note" id="timerHint">出汁の種類を選ぶと、目安の時間が自動で入ります。</p>
+    <div class="timer-body">
+      <div class="hourglass" id="hourglass">
+        <div class="chamber top"><div class="sand" id="sandTop"></div></div>
+        <div class="neck"><div class="stream" id="stream"></div></div>
+        <div class="chamber bottom"><div class="sand" id="sandBottom"></div></div>
+      </div>
+      <div class="time-display" id="timeDisplay">00:30</div>
+      <div class="time-chips" id="timeChips"></div>
+      <div class="nudge-row">
+        <button type="button" class="nudge-btn" id="minus10">－10秒</button>
+        <button type="button" class="nudge-btn" id="plus10">＋10秒</button>
+      </div>
+      <div class="timer-actions">
+        <button type="button" class="btn-main" id="timerStart">スタート</button>
+        <button type="button" class="btn-reset" id="timerReset">リセット</button>
+      </div>
+      <div class="done-banner" id="doneBanner">🔔 抽出完了！ざるでこしてください</div>
+    </div>
+  </div>
+
+  <details>
+    <summary>だしをもっとおいしくするコツ</summary>
+    <div class="explain">
+      <strong>抽出時間は「短すぎず、長すぎず」</strong><br>
+      鰹節は高温・短時間（30秒〜1分半）で香りだけをすっと抜くのがコツ。長く浸すと苦みとえぐみが出ます。昆布は逆に低温・長時間（15〜20分）でじっくり旨味を引き出します。上のタイマーは出汁の種類ごとにこの目安時間で自動セットされます。<br><br>
+      <strong>鰹節はかき混ぜない・押さない</strong><br>
+      入れたらそのまま。かき混ぜたり菜箸で押したりすると、えぐみと濁りが出ます。浮いた節が自然に沈むのを待つだけでOKです。<br><br>
+      <strong>昆布は洗わない</strong><br>
+      表面の白い粉は旨味成分（グルタミン酸）です。洗い流さず、乾いた布かキッチンペーパーで軽く拭く程度に。<br><br>
+      <strong>昆布はぐらぐら煮ない</strong><br>
+      沸騰直前（鍋肌に小さな泡が出るくらい）で引き上げます。煮立たせるとぬめりと臭みが出て、香りも飛びます。<br><br>
+      <strong>濾すのは布巾かキッチンペーパーで</strong><br>
+      ざるだけだと細かい節が抜けて、あとで舌に残る苦みの原因になります。<br><br>
+      <strong>出がらしは捨てずに二番だしへ</strong><br>
+      使い終わった昆布・鰹節を水からもう一度弱火で10分ほど煮出すと、みそ汁や煮物に十分使える二番だしが取れます。<br><br>
+      <strong>保存は冷蔵2〜3日・冷凍1か月</strong><br>
+      製氷皿で凍らせておくと、使う分だけ取り出せて便利です。
+    </div>
+  </details>
+
+  <div style="height:16px;"></div>
+
+  <details>
+    <summary>仕組みをもう少し詳しく</summary>
+    <div class="explain">
+      沸騰したお湯と常温の水を混ぜると、間の温度になります。それに<strong>鍋や空気に逃げる分の温度（だいたい3℃）</strong>をあらかじめ見込んで計算しています。<br><br>
+      季節や鍋の材質によって逃げる温度は変わるので、いつも仕上がりが少し高い／低いと感じる場合は下の「逃げる温度」を調整してください。0.5℃刻みで変えられます。
+      <div class="field" style="margin-top:14px;">
+        <label for="tLoss">逃げる温度（放熱の見込み）：<span id="tLossDisplay">3.0</span>℃</label>
+        <input type="range" id="tLoss" min="0" max="6" step="0.5" value="3">
+        <div class="helper">保温性の低い鍋・寒い日は多め（4〜5℃）、ふた付きの鍋・かき混ぜが少ない場合は少なめ（1〜2℃）が目安です。</div>
+      </div>
+    </div>
+  </details>
+
+  <footer>次に開いたときも、湯かげんの設定とタイマーの時間を覚えています。</footer>
+</div>
+
+<script>
+const PRESETS = [
+  {label: "鰹節だけ・香り重視（80℃）", value: 80, note: "鰹節のうま味が一番出やすい温度です。浸す時間の目安は30〜60秒。", time: 45},
+  {label: "昆布と一緒に使う（75℃）", value: 75, note: "昆布の風味を壊さず鰹節も効くバランス温度です。目安は1分〜1分30秒。", time: 90},
+  {label: "昆布だけ・じっくり（65℃）", value: 65, note: "昆布の雑味が出にくい低めの温度です。15〜20分かけてゆっくり浸します。", time: 1200},
+  {label: "短時間でしっかり香らせる（85℃）", value: 85, note: "香りは強く出ますが渋みも出やすいので、30秒前後の短時間で引き上げます。", time: 30},
+];
+const TIME_CHIPS = [30, 60, 180, 600, 1200];
+const T_ROOM = 20, T_BOIL = 100;
+const STORE_KEY = "dashi-calc-v4";
+
+const els = {
+  target: document.getElementById("targetTemp"),
+  vol: document.getElementById("totalVolume"),
+  katsuo: document.getElementById("katsuoMass"),
+  katsuoDisp: document.getElementById("katsuoDisplay"),
+  tLoss: document.getElementById("tLoss"),
+  tLossDisp: document.getElementById("tLossDisplay"),
+  boilOut: document.getElementById("boilOut"),
+  coldOut: document.getElementById("coldOut"),
+  warnBox: document.getElementById("warnBox"),
+  targetNote: document.getElementById("targetNote"),
+};
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function saveState() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      target: els.target.value, vol: els.vol.value,
+      katsuo: els.katsuo.value, tLoss: els.tLoss.value,
+    }));
+  } catch (e) { /* storage unavailable, ignore */ }
+}
+
+function buildOptions() {
+  PRESETS.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.value;
+    opt.textContent = p.label;
+    els.target.appendChild(opt);
+  });
+}
+
+function calculate() {
+  const targetUser = parseFloat(els.target.value);
+  const totalVolume = parseFloat(els.vol.value);
+  const katsuo = parseFloat(els.katsuo.value);
+  const tLoss = parseFloat(els.tLoss.value);
+  const tMix = targetUser + tLoss;
+
+  els.katsuoDisp.textContent = katsuo;
+  els.tLossDisp.textContent = tLoss.toFixed(1);
+
+  const preset = PRESETS.find(p => p.value === targetUser);
+  if (preset) els.targetNote.textContent = preset.note;
+
+  const errors = [];
+  if (!(totalVolume >= 100)) errors.push("出来上がりの量は100ml以上にしてください。");
+  if (totalVolume > 10000) errors.push("出来上がりの量は10L以下にしてください。");
+  if (tMix >= T_BOIL) errors.push("この組み合わせだと沸騰したお湯だけでも目標に届きません。「逃げる温度」を下げてみてください。");
+  if (tMix <= T_ROOM) errors.push("この組み合わせだと常温の水だけで目標を超えてしまいます。「逃げる温度」を下げてみてください。");
+
+  if (errors.length) {
+    els.boilOut.innerHTML = "—<span class='amt-unit'>ml</span>";
+    els.coldOut.innerHTML = "—<span class='amt-unit'>ml</span>";
+    els.warnBox.style.display = "block";
+    els.warnBox.textContent = errors.join(" ");
+    return;
+  }
+  els.warnBox.style.display = "none";
+
+  const dHigh = T_BOIL - tMix;
+  const dLow = tMix - T_ROOM;
+  let vCold = (totalVolume * dHigh - katsuo * dLow) / (dHigh + dLow);
+  let vBoil = totalVolume - vCold;
+  if (vBoil < 0) { vBoil = 0; vCold = totalVolume; }
+  if (vCold < 0) { vCold = 0; vBoil = totalVolume; }
+
+  els.boilOut.innerHTML = Math.round(vBoil) + "<span class='amt-unit'>ml</span>";
+  els.coldOut.innerHTML = Math.round(vCold) + "<span class='amt-unit'>ml</span>";
+  saveState();
+}
+
+buildOptions();
+const saved = loadSaved();
+if (saved) {
+  if (saved.target) els.target.value = saved.target;
+  if (saved.vol) els.vol.value = saved.vol;
+  if (saved.katsuo) els.katsuo.value = saved.katsuo;
+  if (saved.tLoss) els.tLoss.value = saved.tLoss;
+}
+
+[els.target, els.vol].forEach(el => el.addEventListener("input", calculate));
+els.target.addEventListener("input", () => {
+  const preset = PRESETS.find(p => p.value === parseFloat(els.target.value));
+  if (preset) syncTimerToPreset(preset.time);
+});
+els.katsuo.addEventListener("input", calculate);
+els.tLoss.addEventListener("input", calculate);
+document.querySelectorAll(".preset-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.katsuo.value = btn.dataset.val;
+    calculate();
+  });
+});
+
+/* ---------- 砂時計タイマー ---------- */
+const tEls = {
+  hourglass: document.getElementById("hourglass"),
+  sandTop: document.getElementById("sandTop"),
+  sandBottom: document.getElementById("sandBottom"),
+  display: document.getElementById("timeDisplay"),
+  chips: document.getElementById("timeChips"),
+  minus: document.getElementById("minus10"),
+  plus: document.getElementById("plus10"),
+  start: document.getElementById("timerStart"),
+  reset: document.getElementById("timerReset"),
+  mute: document.getElementById("muteBtn"),
+  banner: document.getElementById("doneBanner"),
+  hint: document.getElementById("timerHint"),
+};
+
+const TIMER_KEY = "dashi-timer-v1";
+let duration = 30;        // 秒
+let remaining = 30;
+let running = false;
+let done = false;
+let tickHandle = null;
+let lastTick = null;
+let muted = false;
+let audioCtx = null;
+let wakeLock = null;
+
+function fmt(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function buildChips() {
+  tEls.chips.innerHTML = "";
+  TIME_CHIPS.forEach(sec => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "time-chip";
+    b.textContent = sec < 60 ? sec + "秒" : (sec / 60) + "分";
+    b.dataset.sec = sec;
+    b.addEventListener("click", () => { if (!running) setDuration(sec); });
+    tEls.chips.appendChild(b);
+  });
+  highlightChip();
+}
+function highlightChip() {
+  [...tEls.chips.children].forEach(b => {
+    b.classList.toggle("active", Number(b.dataset.sec) === duration);
+  });
+}
+
+function setDuration(sec) {
+  duration = Math.max(10, Math.min(3600, sec));
+  if (!running) {
+    remaining = duration;
+    updateDisplay();
+  }
+  highlightChip();
+  saveTimerState();
+}
+
+function syncTimerToPreset(sec) {
+  if (running || done) return;
+  setDuration(sec);
+}
+
+function updateDisplay() {
+  tEls.display.textContent = fmt(remaining);
+  tEls.display.classList.toggle("done", done);
+  const frac = 1 - remaining / duration; // 0→1 経過割合
+  tEls.sandTop.style.height = Math.max(0, (1 - frac) * 100) + "%";
+  tEls.sandBottom.style.height = Math.min(100, frac * 100) + "%";
+}
+
+function saveTimerState() {
+  try { localStorage.setItem(TIMER_KEY, JSON.stringify({ duration })); } catch (e) {}
+}
+function loadTimerState() {
+  try {
+    const raw = localStorage.getItem(TIMER_KEY);
+    if (raw) duration = JSON.parse(raw).duration || 30;
+  } catch (e) {}
+  remaining = duration;
+}
+
+function playChime() {
+  if (muted) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, i) => {
+      const t = audioCtx.currentTime + i * 0.16;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.47);
+    });
+  } catch (e) {}
+}
+
+async function acquireWakeLock() {
+  try {
+    if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+  } catch (e) {}
+}
+function releaseWakeLock() {
+  try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
+}
+
+function tick() {
+  const now = performance.now();
+  const elapsed = (now - lastTick) / 1000;
+  lastTick = now;
+  remaining -= elapsed;
+  if (remaining <= 0) {
+    remaining = 0;
+    finishTimer();
+    updateDisplay();
+    return;
+  }
+  updateDisplay();
+  tickHandle = requestAnimationFrame(tick);
+}
+
+function startTimer() {
+  if (done) resetTimer();
+  running = true;
+  tEls.hourglass.classList.add("running");
+  tEls.start.textContent = "一時停止";
+  tEls.hint.textContent = "抽出中…このまま待ちましょう。";
+  lastTick = performance.now();
+  tickHandle = requestAnimationFrame(tick);
+  acquireWakeLock();
+}
+function pauseTimer() {
+  running = false;
+  tEls.hourglass.classList.remove("running");
+  tEls.start.textContent = "再開";
+  tEls.hint.textContent = "一時停止中です。";
+  if (tickHandle) cancelAnimationFrame(tickHandle);
+  releaseWakeLock();
+}
+function finishTimer() {
+  running = false;
+  done = true;
+  if (tickHandle) cancelAnimationFrame(tickHandle);
+  tEls.hourglass.classList.remove("running");
+  tEls.start.textContent = "スタート";
+  tEls.hint.textContent = "出汁の種類を選ぶと、目安の時間が自動で入ります。";
+  tEls.banner.classList.add("show");
+  releaseWakeLock();
+  playChime();
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]); } catch (e) {}
+}
+function resetTimer() {
+  running = false;
+  done = false;
+  if (tickHandle) cancelAnimationFrame(tickHandle);
+  remaining = duration;
+  tEls.hourglass.classList.remove("running");
+  tEls.start.textContent = "スタート";
+  tEls.hint.textContent = "出汁の種類を選ぶと、目安の時間が自動で入ります。";
+  tEls.banner.classList.remove("show");
+  releaseWakeLock();
+  updateDisplay();
+}
+
+tEls.start.addEventListener("click", () => {
+  if (audioCtx) { try { audioCtx.resume(); } catch (e) {} }
+  else { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (running) pauseTimer(); else startTimer();
+});
+tEls.reset.addEventListener("click", resetTimer);
+tEls.minus.addEventListener("click", () => { if (!running) setDuration(duration - 10); });
+tEls.plus.addEventListener("click", () => { if (!running) setDuration(duration + 10); });
+tEls.mute.addEventListener("click", () => {
+  muted = !muted;
+  tEls.mute.textContent = muted ? "🔕" : "🔔";
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && running) acquireWakeLock();
+});
+
+loadTimerState();
+buildChips();
+updateDisplay();
+
+calculate();
+</script>
+</body>
+</html>
